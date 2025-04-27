@@ -5,7 +5,7 @@
 
 ## 📍 Project Overview
 
-**ForksAndWords** is the flagship project of **Group K** at **Columbia University's GSAS (QMSS Program)**, developed as the final showcase for **G5063 Data Visualization** under the mentorship of **Professor Thomas Brambor**.
+**ForksAndWords** is the flagship project of **Group K** at **Columbia University's GSAS (QMSS Program)**, developed as the [final showcase for **G5063 Data Visualization**](https://github.com/QMSS-G5063-2025/course_content/blob/main/Exercises/final_project/proposal/final_project.md) under the mentorship of **Professor Thomas Brambor**.
 
 Much like a Michelin-starred kitchen transforms humble ingredients into haute cuisine,  
 **ForksAndWords** elevates unstructured text into a layered, revealing feast through lightly processed NLP and data storytelling.
@@ -27,12 +27,11 @@ A **playfully academic**, **delightfully messy**, yet **strangely addictive** jo
 
 | Step | Description |
 |:----|:------------|
-| 1 | **Handpicked Ingredients:** Manually collected Michelin-starred restaurant info (name, stars, cuisine, description, price, coordinates). |
-| 2 | **Artisan Preparation:** Cleaning, tokenization, stemming of descriptions using customized NLP pipelines. |
-| 3 | **Hidden Flavors Revealed:** Applying LDA topic modeling to surface latent themes. |
-| 4 | **Signature Pairings:** Assigning the most dominant topic to each restaurant, labeling consumer scenes. |
-| 5 | **Cartographic Plating:** Visualizing the distribution of restaurants by star level, topic, and scene on interactive maps. |
-
+| 1 | **Handpicked Ingredients:** Initially attempted to scrape data from Yelp and TripAdvisor, but due to anti-scraping protections, we pivoted to manual collection. Gathered Michelin-starred restaurant information (name, stars, cuisine, description, price range, and coordinates) to ensure clean, copyright-respectful data. |
+| 2 | **Artisan Preparation:** Cleaned, tokenized, and stemmed the restaurant descriptions using a customized NLP pipeline to prepare for further modeling. |
+| 3 | **Hidden Flavors Revealed:** Applied Latent Dirichlet Allocation (LDA) to uncover underlying thematic structures within the text corpus. |
+| 4 | **Signature Pairings:** Assigned each restaurant its most dominant topic, crafting consumer scene labels that describe the thematic dining experience. |
+| 5 | **Cartographic Plating:** Mapped the restaurants interactively, visualizing distributions by Michelin stars, dominant topics, and consumer scenes across New York City. |
 ---
 
 ## 🧰 Tech Stack
@@ -50,20 +49,95 @@ A **playfully academic**, **delightfully messy**, yet **strangely addictive** jo
 ## 🌎 Project Layout
 ```
 ForksAndWords/
-├── Home.py                     # Main homepage (Michelin restaurant-style design)
-├── pages/
-│   ├── 1_Data_Process.py       # NLP Text Cleaning Walkthrough
-│   ├── 2_Map.py                # Michelin Star Map Visualization
-│   └── 3_Marketing_Map.py      # Consumer Scene Map Visualization
-├── data/
-│   ├── michelin_full.xlsx      # Original collected data
-│   ├── lda_topic_keywords.csv  # Extracted LDA topics
-│   └── manual_scene_labels.csv # Manually assigned consumer scenes
-├── image/
-│   └── banner_michelin.png     # Homepage banner image
-├── README.md                   # Project introduction (this file)
-└── requirements.txt            # Python package requirements
+├── Home.py                     # Main homepage (Michelin restaurant-style design using Streamlit)
+├── pages/                       # Subpages for website navigation
+│   ├── 1_Data_Process.py        # NLP Text Cleaning Walkthrough (Tokenization, Stopword Removal, Stemming)
+│   ├── 2_Map.py                 # Michelin Star Map Visualization (by stars, locations)
+│   └── 3_Marketing_Map.py       # Consumer Scene Map Visualization (based on LDA topic modeling)
+├── app/                         # Backend scripts for data processing and modeling
+│   ├── __init__.py              # Package initialization
+│   ├── apply_scene_tags.py      # Merge manual consumer scene labels with restaurant data
+│   ├── main.py                  # CLI-based menu for running LDA, applying scenes, and launching website
+│   ├── nlp_topic_modeling.py    # LDA topic modeling and dominant topic assignment
+│   ├── stemmer_custom.py        # Custom stemming function for NLP preprocessing
+│   └── visualization.py         # Launches Streamlit app when selected via CLI
+├── data/                        # Data files used for analysis and visualization
+│   ├── michelin_full.xlsx       # Original manually collected Michelin restaurant data
+│   ├── lda_topic_keywords.csv   # Extracted LDA topic keywords for manual labeling
+│   ├── manual_scene_labels.csv  # Manually assigned consumer scene labels
+├── image/                       # Visual assets for website
+│   └── banner_michelin.png      # Homepage header banner image
+├── README.md                    # Project overview, structure, and operation manual (this file)
+└── requirements.txt             # Python package requirements for setting up the environment
 ```
+
+🔹 **Notes**:
+- `Home.py` serves as the main entry point, designed in the style of a Michelin restaurant page.
+- `app/` contains backend scripts for text processing, LDA modeling, merging scene tags, and data visualization through streamlit.
+- `pages/` contains individual interactive pages for website navigation.
+- `data/` stores both raw and processed data files used in the project.
+- `image/` contains branding assets for the homepage.
+---
+
+## 🛠️ How to Run the Data Processing Pipeline
+
+Our project allows you to process the restaurant data step-by-step through a simple and clear workflow.
+
+### 1. Initial Input
+- Start with the file:  
+  ➔ `data/michelin_full.xlsx`  
+  (Includes restaurant name, stars, cuisine, description, price range, and coordinates.)
+
+### 2. LDA Topic Modeling
+- Run the pipeline, which will automatically generate:
+  - `data/michelin_with_topics.xlsx` → Restaurant data with assigned **dominant topics**.
+  - `data/lda_topic_keywords.csv` → Extracted **top keywords** per topic for manual interpretation.
+
+### 3. Manual Scene Labeling
+- Open and manually interpret `lda_topic_keywords.csv`.
+- Create and save your marketing-style labels in a new file:  
+  ➔ `data/manual_scene_labels.csv`  
+  (Fill in `consumer_scene` and `theme` columns based on topic keywords.)
+
+### 4. Merging the Final Dataset
+- Merge your marketing labels back into the restaurant dataset.
+- This will produce:  
+  ➔ `data/michelin_with_scene.xlsx`  
+  (Fully labeled and ready for website visualization.)
+
+---
+
+## 🚀 How to Operate via CLI Menu
+
+To make running the steps even easier, you can simply run the `main.py` file.  
+
+```python
+def main():
+    while True:
+        print_menu()
+        choice = input("\nEnter your choice (0-3): ").strip()
+
+        if choice == "1":
+            nlp_topic_modeling.run_lda_on_descriptions()
+
+        elif choice == "2":
+            apply_scene_tags.merge_scene_labels()
+
+        elif choice == "3":
+            visualization.create_spatial_map()
+
+        elif choice == "0":
+            print("Exiting the program. Goodbye!")
+            break
+
+        else:
+            print("Invalid choice. Please enter a number from 0 to 3.")
+```
+**♦️Menu Options:**
+- 1 → Run LDA topic modeling on the descriptions and generate michelin_with_topics.xlsx and lda_topic_keywords.csv
+- 2 → Apply manually labeled consumer scenes from manual_scene_labels.csv and generate michelin_with_scene.xlsx
+- 3 → Launch the Streamlit website (streamlit run Home.py)
+- 0 → Exit the program
 ---
 
 ## 👨‍🍳 Chefs de Cuisine
