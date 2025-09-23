@@ -29,11 +29,8 @@ with st.sidebar:
     stars = st.multiselect("Michelin Stars ⭐", options=[1, 2, 3], default=[1, 2, 3])
     prices = st.multiselect("Price Range 💵", options=[1, 2, 3, 4], default=[3, 4])
     cuisines = st.multiselect("Cuisine 🍽️", options=all_cuisines, default=["ALL"])
-    map_style = st.selectbox("Map Style 🗺️", options=[
-        "mapbox://styles/mapbox/light-v9",
-        "mapbox://styles/mapbox/dark-v9",
-        "mapbox://styles/mapbox/outdoors-v11",
-        "mapbox://styles/mapbox/streets-v11"
+    tile_style = st.selectbox("Map Tile Style 🗺️", options=[
+        "Carto Light", "Carto Dark"
     ], index=0)
 
 # ---------------------- Filtering Logic ----------------------
@@ -47,11 +44,19 @@ if "ALL" not in cuisines:
         lambda t: any(c in [x.strip() for x in str(t).split(",")] for c in cuisines)
     )]
 
+# ---------------------- Map Tile Style ----------------------
+tile_urls = {
+    "Carto Light": "light",
+    "Carto Dark": "dark"
+}
+tile_url = tile_urls[tile_style]
+
 # ---------------------- Display Map ----------------------
 st.markdown(f"### 📌 {len(filtered_df)} restaurants match your selection.")
 
 if not filtered_df.empty:
-    layer = pdk.Layer(
+    # Scatter layer for restaurants
+    scatter_layer = pdk.Layer(
         "ScatterplotLayer",
         data=filtered_df,
         get_position='[lon, lat]',
@@ -60,6 +65,7 @@ if not filtered_df.empty:
         pickable=True,
     )
 
+    # Viewport centered on restaurant locations
     view_state = pdk.ViewState(
         latitude=filtered_df['lat'].mean(),
         longitude=filtered_df['lon'].mean(),
@@ -67,16 +73,19 @@ if not filtered_df.empty:
         pitch=0,
     )
 
+    # Hover tooltip
     tooltip = {
         "html": "<b>{restaurant}</b><br/>💰 {price_display}<br/>⭐ {star} Stars<br/><i>{tag}</i>",
         "style": {"backgroundColor": "white", "color": "black", "fontSize": "12px"}
     }
 
+    # Render the map with Carto base style
     deck = pdk.Deck(
-        layers=[layer],
+        layers=[scatter_layer],
         initial_view_state=view_state,
         tooltip=tooltip,
-        map_style=map_style
+        map_provider='carto',
+        map_style=tile_url
     )
     st.pydeck_chart(deck)
 
