@@ -10,11 +10,12 @@ st.set_page_config(page_title="🍽️ Consumer Scenes Map", layout="wide")
 st.title("🎯 Scene-Based Map of Michelin Restaurants")
 
 # ---------------- Load Data ----------------
-DATA_FOLDER = os.path.join(os.path.dirname(__file__), "..", "data")
+BASE_DIR = os.path.dirname(__file__)
+DATA_PATH = os.path.join(BASE_DIR, '..', 'data')
 
-df = pd.read_csv(os.path.join(DATA_FOLDER, "merged_michelin_data.csv"))
-topics_df = pd.read_csv(os.path.join(DATA_FOLDER, "LDA_topics.csv"))
-manual_labels_df = pd.read_csv(os.path.join(DATA_FOLDER, "manual_scene_labels.csv"))
+df = pd.read_csv(os.path.join(DATA_PATH, 'merged_michelin_data.csv'))
+topics_df = pd.read_csv(os.path.join(DATA_PATH, 'LDA_topics.csv'))
+manual_labels_df = pd.read_csv(os.path.join(DATA_PATH, 'manual_scene_labels.csv'))
 
 # ---------------- Section 1: LDA Topics ----------------
 st.markdown("## 📚 Step 1: LDA Topics Summary")
@@ -62,51 +63,60 @@ df["color"] = df["clean_scene"].map(scene_colors_rgb)
 # C. Filter UI
 with st.expander("🎛️ Filter by Scene", expanded=True):
     selected = st.multiselect("Select Scenes:", list(scene_colors_rgb.keys()), default=list(scene_colors_rgb.keys()))
-filtered_df = df[df["clean_scene"].isin(selected)]
 
+# D. Map style selection (light or dark)
+map_style_choice = st.radio("🗺️ Map Style", options=["Light", "Dark"], index=0, horizontal=True)
+map_style_value = "light" if map_style_choice == "Light" else "dark"
+
+# E. Filter Data
+filtered_df = df[df["clean_scene"].isin(selected)]
 st.markdown(f"Showing **{len(filtered_df)}** restaurants.")
 
-# D. Map Layer
-layer = pdk.Layer(
-    "ScatterplotLayer",
-    data=filtered_df,
-    get_position='[lon, lat]',
-    get_fill_color='color',
-    get_radius=100,
-    pickable=True
-)
+# F. Pydeck Map
+if not filtered_df.empty:
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=filtered_df,
+        get_position='[lon, lat]',
+        get_fill_color='color',
+        get_radius=100,
+        pickable=True
+    )
 
-view_state = pdk.ViewState(
-    latitude=filtered_df["lat"].mean() if not filtered_df.empty else 40.73,
-    longitude=filtered_df["lon"].mean() if not filtered_df.empty else -73.93,
-    zoom=11
-)
+    view_state = pdk.ViewState(
+        latitude=filtered_df["lat"].mean(),
+        longitude=filtered_df["lon"].mean(),
+        zoom=11
+    )
 
-tooltip = {
-    "html": """
-        <b>{restaurant}</b><br/>
-        Price: {price_display}<br/>
-        ⭐ Stars: {star}<br/>
-        Cuisine: {tag}<br/>
-        <i>Scene: {clean_scene}</i>
-    """,
-    "style": {
-        "backgroundColor": "white",
-        "color": "black",
-        "padding": "10px",
-        "fontSize": "12px"
+    tooltip = {
+        "html": """
+            <b>{restaurant}</b><br/>
+            Price: {price_display}<br/>
+            ⭐ Stars: {star}<br/>
+            Cuisine: {tag}<br/>
+            <i>Scene: {clean_scene}</i>
+        """,
+        "style": {
+            "backgroundColor": "white",
+            "color": "black",
+            "padding": "10px",
+            "fontSize": "12px"
+        }
     }
-}
 
-deck = pdk.Deck(
-    layers=[layer],
-    initial_view_state=view_state,
-    tooltip=tooltip,
-    map_style="mapbox://styles/mapbox/light-v9"
-)
+    deck = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        map_provider='carto',
+        map_style=map_style_value
+    )
 
-st.pydeck_chart(deck)
+    st.pydeck_chart(deck)
+else:
+    st.warning("😕 No restaurants match your filter.")
 
-# Optional: raw data view
+# G. Optional Raw Data Table
 with st.expander("🧾 Show Data Table"):
     st.dataframe(filtered_df)
